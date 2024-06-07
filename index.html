@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase_version9_RealtimeDB(G'sACADEMY初学者用サンプル)</title>
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <h1>チャットアプリ</h1>
+    <!-- コンテンツ表示画面 -->
+    <div>
+        <!-- 各場所にidを設定しましょう -->
+        <div>
+            <input type="text" id ="uname" placeholder="名前を入力してください">
+        </div>
+        <div>
+            <textarea placeholder="文章を入力してください" id="text"></textarea>
+        </div>
+        <button id ="send">送信</button>
+        <!-- style.cssに "overflow: auto;"を書いてみましょう！※最後に -->
+        <div id="output"></div>
+    </div>
+
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
+        import { getDatabase, ref, push, set,update, onChildAdded, remove, onChildChanged, onChildRemoved }
+            from "https://www.gstatic.com/firebasejs/9.1.0/firebase-database.js";
+        // Your web app's Firebase configuration
+
+        // 提出前にここを消してから出す。↓以下ここの部分は空欄で出す
+        const firebaseConfig = {
+            apiKey:
+            authDomain: 
+            projectId: 
+            storageBucket: 
+            messagingSenderId: 
+            appId: 
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app); //RealtimeDBに接続
+        const dbRef = ref(db, "chat"); //RealtimeDB内の"chat"を使う
+
+        //データ登録(Click)
+        $("#send").on("click",function(){
+            const uname = $("#uname").val();
+            const text =$("#text").val();
+
+         // console.log(uname,"名前")
+         // console.log(text,'テキスト')
+
+
+         //送信のデータの塊を作る
+         //  データの塊を作るのは名前とテキストを一致させたいから  
+           const msg={
+               uname: $("#uname").val(),
+               text: $("#text").val(),
+           }
+
+         //    送信処理を書きます。
+         //    firebaseにpush＝送る準備をする。dbRefは秘密のカギの情報
+         const newPostRef = push(dbRef)
+         set(newPostRef,msg)
+
+         //  送信した後に入力欄を空にして入力しやすくする。
+         $('#uname').val("");
+         $("#text").val("");
+
+        });
+
+        //データ登録(Enter)
+        //最初にデータ取得＆onSnapshotでリアルタイムにデータを取得
+        // const keyは削除・更新に必須 console.log(msg,'データの中身') console.log(key,'鍵の名前')
+         onChildAdded(dbRef,function(data){
+            const msg = data.val();
+            const key = data.key;  
+           
+
+            
+         // htmlとして埋め込みたいので、テンプレートリテラル 
+            let html =`
+            <div id = "${key}"class ="msg">
+                <p>${msg.uname}<br>
+                <span cntentEditable ="true" id = "${key}_update">${msg.text}</span>  
+                <span class ="remove" data-key="${key}">🚮</span> 
+                <span class ="update" data-key="${key}" >✍</span>
+                </p>
+            </div>`
+             // #outputの最後に追加
+               $("#output") .append(html);
+         });
+
+         //削除イベント
+         $("#output").on("click",".remove",function(){
+            const key = $(this).attr("data-key");
+            const removeItem = ref(db,"chat/"+key);
+            remove(removeItem);
+
+         });
+
+         //更新イベント
+         $("#output").on("click",".update",function(){
+            const key = $(this).attr("data-key");
+            update(ref(db,"chat/"+key),{
+                text : $("#"+key+'_update').html()
+            });
+         });
+
+        //削除処理実施時のイベント
+
+        onChildRemoved(dbRef,(data) =>{
+            $("#"+data.key).remove();
+
+        });
+
+        //更新処理時イベント
+        onChildChanged(dbRef,(data) =>{
+            $("#"+data.key+'_update').html(data.val().text);
+            $("#"+data.key+'_update').fadeOut(800).fadeIn(800);
+
+        });
+
+         
+    </script>
+</body>
+
+</html>

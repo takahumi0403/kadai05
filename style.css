@@ -1,0 +1,16 @@
+.msg:nth-child(odd){
+    background-color: aqua;
+    margin-right: auto;
+    padding: 10px;
+    border:1px solid gray;
+    width: 300px;
+    margin-top: 15px;
+}
+
+.msg:nth-child(even){
+    margin-left: auto;
+    padding: 10px;
+    border:1px solid gray;
+    width: 300px;
+    margin-top: 15px;
+}
